@@ -270,6 +270,71 @@ func Test_Handles_Error_For_Filtered_Company_With_Bad_Entry(t *testing.T) {
 	}
 }
 
+func Test_Returns_Company_Successfully(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	id := 67
+	name := "abc123"
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	// adds rows
+	mockRows := sqlmock.NewRows([]string{"name", "id"}).
+		AddRow(name, id)
+	// runs the mock query
+	mock.ExpectQuery(regexp.QuoteMeta(`select name, id from company where id = ?`)).
+		WithArgs(id).
+		WillReturnRows(mockRows)
+	// runs the real query
+	GetCompanyById(db, &id)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func Test_Handles_Error_For_Company(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	id := 67
+	name := "abc123"
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	// adds rows
+	mockRows := sqlmock.NewRows([]string{"name", "id"}).
+		AddRow(name, id)
+	// runs the mock query
+	mock.ExpectQuery(regexp.QuoteMeta(`select name, id from companys where id = ?`)).
+		WithArgs(id).
+		WillReturnRows(mockRows)
+	// runs the mock query (unsuccessfully since the table name is wrong)
+	GetCompanyById(db, &id)
+	if err := mock.ExpectationsWereMet(); err == nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func Test_Handles_Error_For_Company_With_Bad_Entry(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	id := 67
+	name := "abc123"
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	// adds rows
+	mockRows := sqlmock.NewRows([]string{"name", "id"}).
+		AddRow(nil, nil).
+		AddRow(name, id).
+		RowError(1, fmt.Errorf("row error"))
+	// runs the mock query
+	mock.ExpectQuery(regexp.QuoteMeta(`select name, id from company where id = ?`)).
+		WithArgs(id).
+		WillReturnRows(mockRows)
+	// runs the real query
+	_, e := GetCompanyById(db, &id)
+	if err := mock.ExpectationsWereMet(); err != nil || e == nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
 func Test_Returns_Inserted_Company_Successfully(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	newName := "abc123"
