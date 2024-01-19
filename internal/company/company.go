@@ -53,6 +53,17 @@ func GetCompaniesByName(db *sql.DB, name *string) ([]Company, error) {
 	return scanRows(rows)
 }
 
+func GetCompanyById(db *sql.DB, id *int) (Company, error) {
+	row := db.QueryRow(
+		`select name, id from company where id = ?`,
+		id,
+	)
+	company := Company{}
+	err := row.Scan(&company.Name, &company.Id)
+	// sql.ErrorNoRows. Handle in some other way perhaps?
+	return company, err
+}
+
 func GetCompanyByName(db *sql.DB, name *string) (Company, error) {
 	row := db.QueryRow(
 		`select name, id from company where name = ?`,
